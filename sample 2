@@ -1,0 +1,261 @@
+#include <iostream>
+#include <fstream>
+using namespace std; 
+
+class Node {
+public:
+    char data;
+    Node* next;
+
+    Node(char value) : data(value), next(nullptr) {}
+};
+
+class Stack {
+private:
+    Node* top;
+
+public:
+    Stack() : top(nullptr) {}
+
+    ~Stack() {
+        while (!isEmpty()) {
+            pop();
+        }
+    }
+
+    void push(char value) {
+        Node* newNode = new Node(value);
+        newNode->next = top;
+        top = newNode;
+    }
+
+    char pop() {
+        if (isEmpty()) {
+            return '\0';
+        }
+
+        char poppedValue = top->data;
+        Node* temp = top;
+        top = top->next;
+        delete temp;
+
+        return poppedValue;
+    }
+
+    bool isEmpty() const {
+        return top == nullptr;
+    }
+};
+
+class InforXApp {
+private:
+static char mapVowel(char vowel) {
+    char lowercaseVowel = tolower(vowel);
+
+    switch (lowercaseVowel) {
+        case 'a':
+        case 'A':
+            return '*';
+        case 'e':
+        case 'E':
+            return '@';
+        case 'i':
+        case 'I':
+            return '#';
+        case 'o':
+        case 'O':
+            return '$';
+        case 'u':
+        case 'U':
+            return '&';
+        default:
+            return vowel;
+    }
+}
+
+static char reverseMapVowel(char encryptedVowel, char vowel) {
+    // If the original vowel was uppercase, return the decrypted vowel as uppercase
+    if (isupper(vowel)) {
+        switch (encryptedVowel) {
+            case '*':
+                return 'A';
+            case '@':
+                return 'E';
+            case '#':
+                return 'I';
+            case '$':
+                return 'O';
+            case '&':
+                return 'U';
+            default:
+                return encryptedVowel;
+        }
+    } else { // If the original vowel was lowercase, return the decrypted vowel as lowercase
+        switch (encryptedVowel) {
+            case '*':
+                return 'a';
+            case '@':
+                return 'e';
+            case '#':
+                return 'i';
+            case '$':
+                return 'o';
+            case '&':
+                return 'u';
+            default:
+                return encryptedVowel;
+        }
+    }
+}
+
+    static void writeToFile(const string& fileName, const string& content) {
+        ofstream outputFile(fileName.c_str());
+        if (outputFile.is_open()) {
+            outputFile << content;
+            outputFile.close();
+            std::cout << "Encrypted Text has been written to '" << fileName << "'." << endl;
+        } else {
+            std::cout << "Error: Unable to open output file for writing." << endl;
+        }
+    }
+
+    static string readFromFile(const string& fileName) {
+        ifstream inputFile(fileName.c_str());
+        if (!inputFile.is_open()) {
+            cout << "Error: Unable to open input file " << fileName << endl;
+            return "";
+        }
+
+        string content;
+        getline(inputFile, content);
+
+        inputFile.close();
+        return content;
+    }
+
+public:
+    static string reverseCharacters(const string& text) {
+        string reversedText = "";
+        string word = "";
+
+        for (int i = text.length() - 1; i >= 0; --i) {
+            if (text[i] == ' ' || text[i] == '\t') {
+                // Reverse the characters in the current word
+                for (int j = word.length() - 1; j >= 0; --j) {
+                    reversedText += word[j];
+                }
+
+                word = ""; // Reset the word for the next one
+                reversedText += text[i]; // Add the space or tab
+            } else {
+                word = text[i] + word; // Build the current word
+            }
+        }
+
+        // Handle the first word
+        for (int j = word.length() - 1; j >= 0; --j) {
+            reversedText += word[j];
+        }
+
+        return reversedText;
+    }
+
+    static string encrypt(const string& text) {
+        string reversedText = reverseCharacters(text);
+        string encryptedText = "";
+
+        for (char c : reversedText) {
+            encryptedText += mapVowel(c);
+        }
+
+        writeToFile("encrypted_text.txt", encryptedText);
+        return encryptedText;
+    }
+
+string decrypt(const string& encryptedText) {
+    string decryptedText = "";
+
+    for (char c : encryptedText) {
+        char originalChar = reverseMapVowel(c, c);
+        decryptedText += (isupper(c) ? toupper(originalChar) : tolower(originalChar));
+    }
+
+    // Reverse the entire string
+    decryptedText = reverseCharacters(decryptedText);
+
+    return decryptedText;
+}
+
+
+
+    void processInputFile(const string& inputFileName, bool isEncrypt) {
+        string inputText = readFromFile(inputFileName);
+        cout << "Input Text from File: " << inputText << endl;
+
+        if (isEncrypt) {
+            string encryptedText = encrypt(inputText);
+            cout << "Encrypted Text: " << encryptedText << endl;
+        } else {
+            string decryptedText = decrypt(inputText);
+            cout << "Decrypted Text: " << decryptedText << endl;
+        }
+    }
+};
+
+int getValidChoice() {
+    int choice;
+    while (true) {
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        if (cin.fail() || choice < 1 || choice > 3) {
+            cin.clear();
+            while (cin.get() != '\n');  // Clear input buffer
+            cout << "Invalid input. Please enter a valid option (1-3)." << endl;
+        } else {
+            break;
+        }
+    }
+
+    return choice;
+}
+
+void printMenu() {
+    cout << "\nInforX App Menu:" << std::endl;
+    cout << "1. Encrypt Text from File" << endl;
+    cout << "2. Decrypt Text from File" << endl;
+    cout << "3. Exit" << std::endl;
+}
+
+int main() {
+    InforXApp inforXApp;
+
+    int choice;
+    string inputFileName;
+
+    do {
+        printMenu();
+        choice = getValidChoice();
+
+        switch (choice) {
+            case 1:
+                cout << "Enter input file name: ";
+                cin >> inputFileName;
+                inforXApp.processInputFile(inputFileName, true);
+                break;
+            case 2:
+                cout << "Enter input file name: ";
+                cin >> inputFileName;
+                inforXApp.processInputFile(inputFileName, false);
+                break;
+            case 3:
+                cout << "Exiting the program. Goodbye!" << endl;
+                break;
+            default:
+                cout << "Invalid choice. Please enter a valid option." << endl;
+        }
+
+    } while (choice != 3);
+
+    return 0;
+}
